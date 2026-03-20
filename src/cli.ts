@@ -7,8 +7,9 @@
  *   ir-codegen --config ir-codegen.json
  */
 
-import { generate } from './index.ts';
-import type { CodegenConfig } from './index.ts';
+import { readFileSync } from 'node:fs';
+import { generate } from './index.js';
+import type { CodegenConfig } from './index.js';
 
 function parseArgs(args: string[]): CodegenConfig {
 	const config: Partial<CodegenConfig> = {};
@@ -31,10 +32,12 @@ function parseArgs(args: string[]): CodegenConfig {
 				i++;
 				break;
 			case '--config': {
-				// TODO: Read config from JSON file
-				console.error('--config not yet implemented');
-				process.exit(1);
-				break;
+				if (!next) {
+					console.error('--config requires a path argument');
+					process.exit(1);
+				}
+				const raw = readFileSync(next, 'utf-8');
+				return JSON.parse(raw) as CodegenConfig;
 			}
 			case '--help':
 				console.log(`

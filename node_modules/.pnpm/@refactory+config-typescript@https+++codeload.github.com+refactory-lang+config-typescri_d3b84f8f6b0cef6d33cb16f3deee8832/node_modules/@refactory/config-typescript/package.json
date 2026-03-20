@@ -1,0 +1,17 @@
+{
+  "name": "@refactory/config-typescript",
+  "version": "0.1.0",
+  "description": "Shared TypeScript toolchain config for refactory-lang repos — tsconfig, oxlint, oxfmt",
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./oxlintrc.json": "./oxlintrc.json",
+    "./oxfmt.json": "./oxfmt.json"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "oxlintrc.json",
+    "oxfmt.json"
+  ],
+  "license": "Apache-2.0"
+}

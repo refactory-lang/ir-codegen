@@ -1,0 +1,31 @@
+{
+  "name": "@refactory/ir-codegen",
+  "version": "0.1.0",
+  "description": "Code generator for IR builders — reads tree-sitter grammars, generates typed builders, renderers, and tests",
+  "type": "module",
+  "main": "./src/index.ts",
+  "bin": { "ir-codegen": "./src/cli.ts" },
+  "exports": { ".": "./src/index.ts" },
+  "files": ["src"],
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run",
+    "lint": "oxlint -c node_modules/@refactory/config-typescript/oxlintrc.json .",
+    "format": "oxfmt --config node_modules/@refactory/config-typescript/oxfmt.json ."
+  },
+  "dependencies": {
+    "@refactory/grammar-types": "github:refactory-lang/grammar-types"
+  },
+  "devDependencies": {
+    "@codemod.com/jssg-types": "^1.5.0",
+    "@refactory/config-typescript": "github:refactory-lang/config-typescript",
+    "@typescript/native-preview": "7.0.0-dev.20260317.1",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
+    "type-fest": "^5.4.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.0"
+  },
+  "packageManager": "pnpm@10.32.1"
+}

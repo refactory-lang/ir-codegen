@@ -94,8 +94,8 @@ describe('generate()', () => {
 
 		it('renderer contains case for each node kind', () => {
 			const result = generate(RUST_CONFIG);
-			expect(result.renderer).toContain("'struct_item'");
-			expect(result.renderer).toContain("'function_item'");
+			expect(result.renderer).toMatch(/(^|\n)[ \t]*case 'struct_item'/);
+			expect(result.renderer).toMatch(/(^|\n)[ \t]*case 'function_item'/);
 		});
 
 		it('renderer has no {{PLACEHOLDER}} tokens', () => {

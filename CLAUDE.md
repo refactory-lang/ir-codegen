@@ -7,9 +7,10 @@ Code generator for IR builders. Part of the [refactory-lang](https://github.com/
 - **Entry** (`src/index.ts`): `CodegenConfig` interface and `generate()` function
 - **CLI** (`src/cli.ts`): Command-line entry point with argument parsing
 - **Templates** (`src/templates/`): Template strings for generated code
-  - `builder.ts.template` -- factory function template
+  - `builder.ts.template` -- factory function + fluent Builder class implementing `BuilderTerminal` from `@refactory/grammar-types`, with fluent setter methods and `render()`/`renderSilent()` terminals
+  - `fluent-namespace.ts.template` -- generates the `ir` namespace object that maps short names (e.g., `ir.fn()`, `ir.struct()`) to fluent builder constructors
   - `render-case.ts.template` -- switch case template
-  - `test.ts.template` -- vitest test template
+  - `test.ts.template` -- vitest test template (includes fluent API test cases)
 
 ### Running
 
@@ -26,9 +27,10 @@ pnpm format        # format (oxfmt)
 |------|---------|
 | `src/index.ts` | Public API: `CodegenConfig`, `GeneratedFiles`, `generate()` |
 | `src/cli.ts` | CLI entry point |
-| `src/templates/builder.ts.template` | Builder factory function template |
+| `src/templates/builder.ts.template` | Builder factory function + fluent Builder class (implements BuilderTerminal) |
+| `src/templates/fluent-namespace.ts.template` | `ir` namespace mapping short names to builder constructors |
 | `src/templates/render-case.ts.template` | Render switch case template |
-| `src/templates/test.ts.template` | Vitest test template |
+| `src/templates/test.ts.template` | Vitest test template (includes fluent API tests) |
 | `package.json` | Package config |
 
 ### Conventions

@@ -33,6 +33,8 @@ export interface GeneratedFiles {
 	tests: Map<string, string>;
 	/** re-exports from grammar-types */
 	types: string;
+	/** fluent builder classes + ir namespace */
+	fluent: string;
 }
 
 /**

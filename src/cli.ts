@@ -7,8 +7,10 @@
  *   ir-codegen --config ir-codegen.json
  */
 
-import { generate } from './index.ts';
-import type { CodegenConfig } from './index.ts';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { generate } from './index.js';
+import type { CodegenConfig } from './index.js';
 
 function parseArgs(args: string[]): CodegenConfig {
 	const config: Partial<CodegenConfig> = {};
@@ -31,10 +33,43 @@ function parseArgs(args: string[]): CodegenConfig {
 				i++;
 				break;
 			case '--config': {
-				// TODO: Read config from JSON file
-				console.error('--config not yet implemented');
-				process.exit(1);
-				break;
+				if (!next) {
+					console.error('--config requires a path argument');
+					process.exit(1);
+				}
+				let raw: string;
+				try {
+					raw = readFileSync(next, 'utf-8');
+				} catch (err) {
+					console.error(`Failed to read config file at "${next}": ${err instanceof Error ? err.message : String(err)}`);
+					process.exit(1);
+				}
+
+				let parsed: unknown;
+				try {
+					parsed = JSON.parse(raw);
+				} catch (err) {
+					console.error(`Failed to parse JSON in config file "${next}": ${err instanceof Error ? err.message : String(err)}`);
+					process.exit(1);
+				}
+
+				if (!parsed || typeof parsed !== 'object') {
+					console.error('Config file must contain a JSON object with grammar, nodes, and outputDir fields.');
+					process.exit(1);
+				}
+
+				const cfg = parsed as Partial<CodegenConfig>;
+
+				if (
+					typeof cfg.grammar !== 'string' ||
+					!Array.isArray(cfg.nodes) ||
+					typeof cfg.outputDir !== 'string'
+				) {
+					console.error('Invalid config file: expected "grammar" (string), "nodes" (string[]), and "outputDir" (string).');
+					process.exit(1);
+				}
+
+				return cfg as CodegenConfig;
 			}
 			case '--help':
 				console.log(`
@@ -68,8 +103,30 @@ Options:
 }
 
 const config = parseArgs(process.argv.slice(2));
+const outputDir = config.outputDir;
+if (!outputDir) {
+	console.error('Missing required --output argument. Use --help for usage.');
+	process.exit(1);
+}
+
 const result = generate(config);
+
+mkdirSync(outputDir, { recursive: true });
+
+for (const [kind, source] of result.builders) {
+	const fileName = kind.replace(/_/g, '-');
+	writeFileSync(join(outputDir, `${fileName}.ts`), source);
+}
+
+writeFileSync(join(outputDir, 'render.ts'), result.renderer);
+writeFileSync(join(outputDir, 'types.ts'), result.types);
+
+for (const [kind, source] of result.tests) {
+	const fileName = kind.replace(/_/g, '-');
+	writeFileSync(join(outputDir, `${fileName}.test.ts`), source);
+}
 
 console.log(`Generated ${result.builders.size} builders`);
 console.log(`Generated renderer with ${result.builders.size} cases`);
 console.log(`Generated ${result.tests.size} test files`);
+console.log(`Output written to ${outputDir}`);

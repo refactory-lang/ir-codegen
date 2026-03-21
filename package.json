@@ -5,15 +5,17 @@
   "type": "module",
   "main": "./src/index.ts",
   "bin": {
-    "ir-codegen": "./src/cli.ts"
+    "ir-codegen": "./dist/cli.js"
   },
   "exports": {
     ".": "./src/index.ts"
   },
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json && mkdir -p dist/templates && cp src/templates/* dist/templates/",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
     "lint": "oxlint -c node_modules/@refactory/config-typescript/oxlintrc.json .",

@@ -7,7 +7,8 @@
  *   ir-codegen --config ir-codegen.json
  */
 
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { generate } from './index.js';
 import type { CodegenConfig } from './index.js';
 
@@ -102,8 +103,30 @@ Options:
 }
 
 const config = parseArgs(process.argv.slice(2));
+const outputDir = config.outputDir;
+if (!outputDir) {
+	console.error('Missing required --output argument. Use --help for usage.');
+	process.exit(1);
+}
+
 const result = generate(config);
+
+mkdirSync(outputDir, { recursive: true });
+
+for (const [kind, source] of result.builders) {
+	const fileName = kind.replace(/_/g, '-');
+	writeFileSync(join(outputDir, `${fileName}.ts`), source);
+}
+
+writeFileSync(join(outputDir, 'render.ts'), result.renderer);
+writeFileSync(join(outputDir, 'types.ts'), result.types);
+
+for (const [kind, source] of result.tests) {
+	const fileName = kind.replace(/_/g, '-');
+	writeFileSync(join(outputDir, `${fileName}.test.ts`), source);
+}
 
 console.log(`Generated ${result.builders.size} builders`);
 console.log(`Generated renderer with ${result.builders.size} cases`);
 console.log(`Generated ${result.tests.size} test files`);
+console.log(`Output written to ${outputDir}`);

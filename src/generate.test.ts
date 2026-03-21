@@ -9,7 +9,6 @@ import type { CodegenConfig } from './index.js';
 const RUST_CONFIG: CodegenConfig = {
 	grammar: 'rust',
 	nodes: ['struct_item', 'function_item'],
-	outputDir: 'src/generated/',
 };
 
 describe('generate()', () => {
@@ -139,7 +138,6 @@ describe('generate()', () => {
 			const config: CodegenConfig = {
 				grammar: 'rust',
 				nodes: ['nonexistent_node'],
-				outputDir: 'out/',
 			};
 
 			expect(() => generate(config)).toThrow(/nonexistent_node/);
@@ -149,7 +147,6 @@ describe('generate()', () => {
 			const config: CodegenConfig = {
 				grammar: 'nonexistent_grammar',
 				nodes: ['some_node'],
-				outputDir: 'out/',
 			};
 
 			expect(() => generate(config)).toThrow();

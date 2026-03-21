@@ -26,8 +26,8 @@ export interface CodegenConfig {
 	grammar: string;
 	/** Node kinds to generate builders for */
 	nodes: string[];
-	/** Output directory */
-	outputDir: string;
+	/** Output directory (used by the CLI to write generated files; not consumed by generate()) */
+	outputDir?: string;
 	/** Alias map for field renames */
 	aliases?: Record<string, Record<string, string>>;
 	/** Fields that should be optional in builder config */
@@ -109,8 +109,8 @@ function configSpread(): string {
 }
 
 /**
- * Produce render field comments for the render-case template.
- * Each field becomes a commented-out line showing how it would be rendered.
+ * Produce render field lines for the render-case template.
+ * Each line is indented with three tabs to match the case-block context.
  */
 function buildRenderFields(def: NodeDefinition): string {
 	const lines: string[] = [];
@@ -119,21 +119,21 @@ function buildRenderFields(def: NodeDefinition): string {
 	for (const [fieldName, slot] of Object.entries(fields)) {
 		const camel = snakeToCamel(fieldName);
 		if (slot.required) {
-			lines.push(`\tparts.push(renderNode(node.${camel}));`);
+			lines.push(`\t\t\tparts.push(renderNode(node.${camel}));`);
 		} else {
-			lines.push(`\tif (node.${camel}) parts.push(renderNode(node.${camel}));`);
+			lines.push(`\t\t\tif (node.${camel}) parts.push(renderNode(node.${camel}));`);
 		}
 	}
 
 	if (def.children) {
 		if (def.children.required) {
-			lines.push('\tparts.push(renderNode(node.children));');
+			lines.push('\t\t\tparts.push(renderNode(node.children));');
 		} else {
-			lines.push('\tif (node.children) parts.push(renderNode(node.children));');
+			lines.push('\t\t\tif (node.children) parts.push(renderNode(node.children));');
 		}
 	}
 
-	return lines.join('\n') || '\t// no fields';
+	return lines.join('\n') || '\t\t\t// no fields';
 }
 
 /**

@@ -19,7 +19,7 @@ export function emitValidate(config: EmitValidateConfig): string {
 
   const lines: string[] = [];
 
-  lines.push(`import type { ValidationResult } from './types.ts';`);
+  lines.push(`import type { ValidationResult } from './types.js';`);
   lines.push(`import { parse } from 'codemod:ast-grep/${grammar}';`);
   lines.push('');
 
@@ -76,7 +76,7 @@ export function emitValidateFast(config: EmitValidateConfig): string {
 
   const lines: string[] = [];
 
-  lines.push(`import type { ValidationResult } from './types.ts';`);
+  lines.push(`import type { ValidationResult } from './types.js';`);
   lines.push('');
 
   lines.push('/**');

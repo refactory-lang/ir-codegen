@@ -25,8 +25,8 @@ export function emitTest(config: EmitTestConfig): string {
   const lines: string[] = [];
 
   lines.push(`import { describe, it, expect } from 'vitest';`);
-  lines.push(`import { ${factoryName} } from '../src/nodes/${fileName}.ts';`);
-  lines.push(`import { ir } from '../src/fluent.ts';`);
+  lines.push(`import { ${factoryName} } from '../src/nodes/${fileName}.js';`);
+  lines.push(`import { ir } from '../src/fluent.js';`);
   lines.push('');
 
   lines.push(`describe('${node.kind}', () => {`);

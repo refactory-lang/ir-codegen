@@ -17,9 +17,9 @@ export function emitRenderValid(config: EmitRenderValidConfig): string {
 
   const lines: string[] = [];
 
-  lines.push(`import type { ${unionType} } from './types.ts';`);
-  lines.push(`import { renderSilent } from './render.ts';`);
-  lines.push(`import { assertValid } from './validate-fast.ts';`);
+  lines.push(`import type { ${unionType} } from './types.js';`);
+  lines.push(`import { renderSilent } from './render.js';`);
+  lines.push(`import { assertValid } from './validate-fast.js';`);
   lines.push('');
   lines.push(`export function render(node: ${unionType}): string {`);
   lines.push('  return assertValid(renderSilent(node));');

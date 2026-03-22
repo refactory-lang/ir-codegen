@@ -37,9 +37,9 @@ export function emitFluent(config: EmitFluentConfig): string {
     const importBinding = isDuplicate ? factoryName : shortName;
 
     if (importBinding !== shortName) {
-      imports.push(`import { ${shortName} as ${importBinding} } from './nodes/${fileName}.ts';`);
+      imports.push(`import { ${shortName} as ${importBinding} } from './nodes/${fileName}.js';`);
     } else {
-      imports.push(`import { ${shortName} } from './nodes/${fileName}.ts';`);
+      imports.push(`import { ${shortName} } from './nodes/${fileName}.js';`);
     }
 
     // Determine the property key for the ir namespace

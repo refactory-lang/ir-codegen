@@ -29,7 +29,7 @@ const sampleNodes: NodeMeta[] = [
 describe('emitRenderScaffold', () => {
   it('should import the union type from types.ts', () => {
     const source = emitRenderScaffold({ grammar: 'rust', nodes: sampleNodes });
-    expect(source).toContain("import type { RustIrNode } from './types.ts'");
+    expect(source).toContain("import type { RustIrNode } from './types.js'");
   });
 
   it('should contain the indent helper', () => {
@@ -42,8 +42,10 @@ describe('emitRenderScaffold', () => {
     expect(source).toContain('export function renderSilent(node: RustIrNode): string');
     expect(source).toContain("case 'struct_item':");
     expect(source).toContain("case 'function_item':");
-    expect(source).toContain('// TODO: implement rendering for struct_item');
-    expect(source).toContain('// TODO: implement rendering for function_item');
+    // Render cases now contain heuristic-based implementations instead of TODOs
+    expect(source).toContain('renderChild');
+    expect(source).toContain("parts.push('struct')");
+    expect(source).toContain("parts.push('function')");
   });
 
   it('should contain render function calling assertValid', () => {
@@ -54,7 +56,7 @@ describe('emitRenderScaffold', () => {
 
   it('should import assertValid from validate-fast', () => {
     const source = emitRenderScaffold({ grammar: 'rust', nodes: sampleNodes });
-    expect(source).toContain("import { assertValid } from './validate-fast.ts'");
+    expect(source).toContain("import { assertValid } from './validate-fast.js'");
   });
 
   it('should work for a different grammar', () => {
@@ -120,12 +122,12 @@ describe('emitValidateFast', () => {
 describe('emitRenderValid', () => {
   it('should import renderSilent from render.ts', () => {
     const source = emitRenderValid({ grammar: 'rust' });
-    expect(source).toContain("import { renderSilent } from './render.ts'");
+    expect(source).toContain("import { renderSilent } from './render.js'");
   });
 
   it('should import assertValid from validate-fast.ts', () => {
     const source = emitRenderValid({ grammar: 'rust' });
-    expect(source).toContain("import { assertValid } from './validate-fast.ts'");
+    expect(source).toContain("import { assertValid } from './validate-fast.js'");
   });
 
   it('should export render function', () => {
@@ -135,7 +137,7 @@ describe('emitRenderValid', () => {
 
   it('should import the union type', () => {
     const source = emitRenderValid({ grammar: 'rust' });
-    expect(source).toContain("import type { RustIrNode } from './types.ts'");
+    expect(source).toContain("import type { RustIrNode } from './types.js'");
   });
 });
 
@@ -162,12 +164,12 @@ describe('emitTest', () => {
 
   it('should import the factory function', () => {
     const source = emitTest({ grammar: 'rust', node });
-    expect(source).toContain("import { structItem } from '../src/nodes/struct.ts'");
+    expect(source).toContain("import { structItem } from '../src/nodes/struct.js'");
   });
 
   it('should import the fluent API', () => {
     const source = emitTest({ grammar: 'rust', node });
-    expect(source).toContain("import { ir } from '../src/fluent.ts'");
+    expect(source).toContain("import { ir } from '../src/fluent.js'");
   });
 
   it('should contain a factory build test', () => {

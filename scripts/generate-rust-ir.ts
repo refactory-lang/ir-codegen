@@ -6,14 +6,16 @@
  * Outputs to: output/rust-ir/
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { generate } from '../src/index.ts';
 import { listNodeKinds } from '../src/grammar-reader.ts';
 import { emitIndex } from '../src/emitters/index-file.ts';
 import { resolveFileNames } from '../src/naming.ts';
 
-const OUTPUT_DIR = join(import.meta.dirname!, '..', 'output', 'rust-ir');
+const OUTPUT_DIR = process.argv[2]
+	? process.argv[2]
+	: join(import.meta.dirname!, '..', 'output', 'rust-ir');
 
 // 1. Get all named node kinds from the Rust grammar
 const allKinds = listNodeKinds('rust');
@@ -40,9 +42,14 @@ console.log('  wrote types.ts');
 writeFileSync(join(OUTPUT_DIR, 'fluent.ts'), result.fluent);
 console.log('  wrote fluent.ts');
 
-// render.ts (scaffold)
-writeFileSync(join(OUTPUT_DIR, 'render.ts'), result.renderer);
-console.log('  wrote render.ts');
+// render.ts (scaffold — skip if hand-written file already exists)
+const renderPath = join(OUTPUT_DIR, 'render.ts');
+if (existsSync(renderPath)) {
+	console.log('  skipped render.ts (hand-written file exists)');
+} else {
+	writeFileSync(renderPath, result.renderer);
+	console.log('  wrote render.ts');
+}
 
 // nodes/*.ts
 for (const [kind, source] of result.builders) {
@@ -59,9 +66,14 @@ for (const [kind, source] of result.tests) {
 }
 console.log(`  wrote ${result.tests.size} test files`);
 
-// index.ts
-const indexSource = emitIndex({ grammar: 'rust', nodeKinds: allKinds });
-writeFileSync(join(OUTPUT_DIR, 'index.ts'), indexSource);
-console.log('  wrote index.ts');
+// index.ts (skip if hand-written file already exists)
+const indexPath = join(OUTPUT_DIR, 'index.ts');
+if (existsSync(indexPath)) {
+	console.log('  skipped index.ts (hand-written file exists)');
+} else {
+	const indexSource = emitIndex({ grammar: 'rust', nodeKinds: allKinds });
+	writeFileSync(indexPath, indexSource);
+	console.log('  wrote index.ts');
+}
 
 console.log(`\nDone! Output in ${OUTPUT_DIR}`);

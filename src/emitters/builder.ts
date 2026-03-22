@@ -81,9 +81,9 @@ export function emitBuilder(config: EmitBuilderConfig): string {
 
   // --- Imports ---
   lines.push(`import type { BuilderTerminal } from '@refactory/grammar-types';`);
-  lines.push(`import type { ${typeName}, ${configTypeName} } from '../types.ts';`);
-  lines.push(`import { renderSilent } from '../render.ts';`);
-  lines.push(`import { assertValid } from '../validate-fast.ts';`);
+  lines.push(`import type { ${typeName}, ${configTypeName} } from '../types.js';`);
+  lines.push(`import { renderSilent } from '../render.js';`);
+  lines.push(`import { assertValid } from '../validate-fast.js';`);
   lines.push('');
 
   // --- Factory function ---
@@ -109,7 +109,7 @@ export function emitBuilder(config: EmitBuilderConfig): string {
     if (field.multiple) {
       lines.push(`  private _${fieldName}: ${tsType} = [];`);
     } else if (field.required) {
-      lines.push(`  private _${fieldName}: ${tsType};`);
+      lines.push(`  private _${fieldName}: ${tsType} = '';`);
     } else {
       lines.push(`  private _${fieldName}?: ${tsType};`);
     }
@@ -138,7 +138,15 @@ export function emitBuilder(config: EmitBuilderConfig): string {
     const ctorParamName = constructorParam.source === 'children'
       ? 'children'
       : toParamName(constructorParam.name);
-    lines.push(`  constructor(${ctorParamName}: string) {`);
+    // Determine the constructor parameter type
+    let ctorParamType = 'string';
+    if (constructorParam.source === 'children' && node.children?.multiple) {
+      ctorParamType = 'string[]';
+    } else if (constructorParam.source === 'field') {
+      const ctorField = node.fields.find((f) => f.name === constructorParam.name);
+      if (ctorField?.multiple) ctorParamType = 'string[]';
+    }
+    lines.push(`  constructor(${ctorParamName}: ${ctorParamType}) {`);
     lines.push(`    this._${ctorFieldName} = ${ctorParamName};`);
     lines.push(`  }`);
   } else {
@@ -204,7 +212,15 @@ export function emitBuilder(config: EmitBuilderConfig): string {
     const shortParamName = constructorParam.source === 'children'
       ? 'children'
       : toParamName(constructorParam.name);
-    lines.push(`export function ${shortName}(${shortParamName}: string): ${builderClassName} {`);
+    // Match the constructor parameter type
+    let shortParamType = 'string';
+    if (constructorParam.source === 'children' && node.children?.multiple) {
+      shortParamType = 'string[]';
+    } else if (constructorParam.source === 'field') {
+      const ctorField = node.fields.find((f) => f.name === constructorParam.name);
+      if (ctorField?.multiple) shortParamType = 'string[]';
+    }
+    lines.push(`export function ${shortName}(${shortParamName}: ${shortParamType}): ${builderClassName} {`);
     lines.push(`  return new ${builderClassName}(${shortParamName});`);
     lines.push(`}`);
   } else {

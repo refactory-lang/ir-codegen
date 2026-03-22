@@ -11,6 +11,13 @@
  *   ir-codegen --grammar rust --nodes struct_item,function_item --output src/generated/
  */
 
+import { readGrammarNode } from './grammar-reader.ts';
+import { emitTypes } from './emitters/types.ts';
+import { emitBuilder } from './emitters/builder.ts';
+import { emitFluent } from './emitters/fluent.ts';
+import { emitRenderScaffold } from './emitters/render-scaffold.ts';
+import { emitTest } from './emitters/test.ts';
+
 export interface CodegenConfig {
 	/** Grammar language (e.g., 'rust', 'typescript', 'python') */
 	grammar: string;
@@ -43,7 +50,24 @@ export interface GeneratedFiles {
  * @param config - Code generation configuration
  * @returns Generated file contents
  */
-export function generate(_config: CodegenConfig): GeneratedFiles {
-	// TODO: Implement code generation
-	throw new Error('Not yet implemented — see milestone-1 issue');
+export function generate(config: CodegenConfig): GeneratedFiles {
+	const nodes = config.nodes.map((kind) =>
+		readGrammarNode(config.grammar, kind),
+	);
+
+	const builders = new Map<string, string>();
+	const tests = new Map<string, string>();
+
+	for (const node of nodes) {
+		builders.set(node.kind, emitBuilder({ grammar: config.grammar, node }));
+		tests.set(node.kind, emitTest({ grammar: config.grammar, node }));
+	}
+
+	return {
+		builders,
+		renderer: emitRenderScaffold({ grammar: config.grammar, nodes }),
+		tests,
+		types: emitTypes({ grammar: config.grammar, nodeKinds: config.nodes }),
+		fluent: emitFluent({ grammar: config.grammar, nodeKinds: config.nodes }),
+	};
 }

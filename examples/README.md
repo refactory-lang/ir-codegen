@@ -1,24 +1,26 @@
 # ir-codegen examples
 
 Hand-expanded reference output showing what ir-codegen produces for different grammars.
-Compare these with the reference implementation in [rust-ir](https://github.com/refactory-lang/rust-ir).
+Compare these with the generated implementation in [rust-ir](https://github.com/refactory-lang/rust-ir).
 
 ## Composition pattern
 
 Nodes are composed bottom-up into a tree. `.build()` creates IR nodes, `.render()` is called **once at the root**.
 
 ```ts
+import { ir } from '@refactory/rust-ir';
+
 // Build child nodes (no rendering yet)
-const useHashMap = ir.use('std::collections::HashMap').build();
-const point = ir.struct('Point').pub().body('pub x: f64,\npub y: f64').build();
-const distance = ir.fn('distance').pub()
-  .params('a: &Point', 'b: &Point')
-  .returns('f64')
+const useHashMap = ir.useDeclaration('std::collections::HashMap').build();
+const point = ir.structItem('Point').children(['pub']).body('pub x: f64,\npub y: f64').build();
+const distance = ir.fn('distance').children(['pub'])
+  .parameters('a: &Point', 'b: &Point')
+  .returnType('f64')
   .body('((a.x - b.x).powi(2) + (a.y - b.y).powi(2)).sqrt()')
   .build();
 
 // Compose into source file and render once
-const source = ir.file([useHashMap, point, distance]).render();
+const source = ir.file().children([useHashMap, point, distance] as any).render();
 ```
 
 This produces validated Rust source in a single pass:
@@ -45,15 +47,16 @@ All three grammars follow the same `BuilderTerminal` pattern from `@refactory/gr
 import { ir } from '@refactory/rust-ir';
 
 const items = [
-  ir.use('std::collections::HashMap').build(),
-  ir.struct('Config').pub().body('pub name: String,\npub value: i64').build(),
-  ir.fn('new_config').pub()
-    .params('name: &str', 'value: i64')
-    .returns('Config')
+  ir.useDeclaration('std::collections::HashMap').build(),
+  ir.attributeItem('derive(Debug, Clone)').build(),
+  ir.structItem('Config').children(['pub']).body('pub name: String,\npub value: i64').build(),
+  ir.fn('new_config').children(['pub'])
+    .parameters('name: &str', 'value: i64')
+    .returnType('Config')
     .body('Config { name: name.to_string(), value }')
     .build(),
 ];
-const source = ir.file(items).render();
+const source = ir.file().children(items as any).render();
 ```
 
 ### Go — complete file
@@ -114,15 +117,15 @@ examples/<grammar>/
 │   ├── render.ts          # Renderer + validator
 │   ├── fluent.ts          # ir.* namespace
 │   └── nodes/
-│       ├── function.ts    # Factory + fluent builder
-│       ├── ...            # One file per node kind
+│       ├── function-item.ts  # Factory + fluent builder
+│       ├── ...               # One file per node kind
 ```
 
 ## Pattern
 
 Every builder file follows the same template:
 
-1. **Factory function** — `functionDeclaration(config)` creates the raw IR node
-2. **Builder class** — `FunctionBuilder implements BuilderTerminal<FunctionDeclaration>` with fluent setters
-3. **Short-name export** — `fn(name)` returns a new builder instance
-4. **Namespace wiring** — `ir.fn` maps to the short-name export
+1. **Factory function** -- `functionItem(config)` creates the raw IR node
+2. **Builder class** -- `FunctionItemBuilder implements BuilderTerminal<FunctionItem>` with fluent setters
+3. **Short-name export** -- `fn(name)` returns a new builder instance
+4. **Namespace wiring** -- `ir.fn` maps to the short-name export

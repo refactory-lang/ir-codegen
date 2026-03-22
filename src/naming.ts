@@ -11,7 +11,8 @@ const JS_RESERVED = new Set([
   'throw', 'try', 'catch', 'finally', 'with', 'yield', 'super', 'this',
   'void', 'typeof', 'instanceof', 'enum', 'const', 'let', 'var',
   'function', 'extends', 'implements', 'interface', 'package', 'private',
-  'protected', 'public', 'static', 'struct', 'use',
+  'protected', 'public', 'static', 'struct', 'use', 'arguments', 'await',
+  'eval', 'abstract',
 ]);
 
 const SHORT_NAME_ALIASES: Record<string, string> = {
@@ -43,7 +44,11 @@ function stripSuffix(kind: string): string {
 
 /** snake_case to camelCase: `struct_item` -> `structItem` */
 export function toFactoryName(kind: string): string {
-  return snakeToCamel(kind);
+  const name = snakeToCamel(kind);
+  if (JS_RESERVED.has(name)) {
+    return name + '_';
+  }
+  return name;
 }
 
 /** snake_case to PascalCase: `struct_item` -> `StructItem` */
@@ -86,4 +91,45 @@ export function toGrammarTypeName(grammar: string): string {
 /** snake_case to camelCase: `return_type` -> `returnType` */
 export function toFieldName(field: string): string {
   return snakeToCamel(field);
+}
+
+/**
+ * Convert a field name to a safe parameter/variable name.
+ * Like toFieldName but also escapes JS reserved words with trailing underscore.
+ */
+export function toParamName(field: string): string {
+  const name = snakeToCamel(field);
+  if (JS_RESERVED.has(name)) {
+    return name + '_';
+  }
+  return name;
+}
+
+/**
+ * Resolve file names for a set of kinds, falling back to full kebab-case
+ * when suffix stripping would cause collisions.
+ *
+ * @returns Map from kind -> file name (without extension)
+ */
+export function resolveFileNames(kinds: string[]): Map<string, string> {
+  // First pass: try stripped names
+  const strippedToKinds = new Map<string, string[]>();
+  for (const kind of kinds) {
+    const stripped = toFileName(kind);
+    if (!strippedToKinds.has(stripped)) strippedToKinds.set(stripped, []);
+    strippedToKinds.get(stripped)!.push(kind);
+  }
+
+  // Second pass: for collisions, use full kebab-case
+  const result = new Map<string, string>();
+  for (const [stripped, colliding] of strippedToKinds) {
+    if (colliding.length === 1) {
+      result.set(colliding[0], stripped);
+    } else {
+      for (const kind of colliding) {
+        result.set(kind, kind.replace(/_/g, '-'));
+      }
+    }
+  }
+  return result;
 }

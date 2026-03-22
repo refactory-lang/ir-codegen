@@ -10,6 +10,7 @@ import {
   toBuilderClassName,
   toShortName,
   toFieldName,
+  toParamName,
 } from '../naming.ts';
 
 export interface EmitBuilderConfig {
@@ -81,13 +82,18 @@ export function emitBuilder(config: EmitBuilderConfig): string {
   // --- Imports ---
   lines.push(`import type { BuilderTerminal } from '@refactory/grammar-types';`);
   lines.push(`import type { ${typeName}, ${configTypeName} } from '../types.ts';`);
-  lines.push(`import { renderSilent, assertValid } from '../render.ts';`);
+  lines.push(`import { renderSilent } from '../render.ts';`);
+  lines.push(`import { assertValid } from '../validate-fast.ts';`);
   lines.push('');
 
   // --- Factory function ---
-  lines.push(`export function ${factoryName}(config: ${configTypeName}): ${typeName} {`);
+  // When factory name collides with short name, use an internal name and don't export
+  const hasNameCollision = factoryName === shortName;
+  const internalFactoryName = hasNameCollision ? `create${typeName}` : factoryName;
+  const factoryExport = hasNameCollision ? '' : 'export ';
+  lines.push(`${factoryExport}function ${internalFactoryName}(config: ${configTypeName}): ${typeName} {`);
   lines.push(`  return {`);
-  lines.push(`    type: '${kind}',`);
+  lines.push(`    kind: '${kind}',`);
   lines.push(`    ...config,`);
   lines.push(`  } as ${typeName};`);
   lines.push(`}`);
@@ -126,11 +132,14 @@ export function emitBuilder(config: EmitBuilderConfig): string {
 
   // Constructor
   if (constructorParam) {
-    const paramName = constructorParam.source === 'children'
+    const ctorFieldName = constructorParam.source === 'children'
       ? 'children'
       : toFieldName(constructorParam.name);
-    lines.push(`  constructor(${paramName}: string) {`);
-    lines.push(`    this._${paramName} = ${paramName};`);
+    const ctorParamName = constructorParam.source === 'children'
+      ? 'children'
+      : toParamName(constructorParam.name);
+    lines.push(`  constructor(${ctorParamName}: string) {`);
+    lines.push(`    this._${ctorFieldName} = ${ctorParamName};`);
     lines.push(`  }`);
   } else {
     lines.push(`  constructor() {}`);
@@ -164,10 +173,10 @@ export function emitBuilder(config: EmitBuilderConfig): string {
 
   // build()
   lines.push(`  build(): ${typeName} {`);
-  lines.push(`    return ${factoryName}({`);
+  lines.push(`    return ${internalFactoryName}({`);
   for (const field of node.fields) {
     const fieldName = toFieldName(field.name);
-    lines.push(`      ${field.name}: this._${fieldName},`);
+    lines.push(`      ${fieldName}: this._${fieldName},`);
   }
   if (node.hasChildren) {
     lines.push(`      children: this._children,`);
@@ -192,11 +201,11 @@ export function emitBuilder(config: EmitBuilderConfig): string {
 
   // --- Short-name export ---
   if (constructorParam) {
-    const paramName = constructorParam.source === 'children'
+    const shortParamName = constructorParam.source === 'children'
       ? 'children'
-      : toFieldName(constructorParam.name);
-    lines.push(`export function ${shortName}(${paramName}: string): ${builderClassName} {`);
-    lines.push(`  return new ${builderClassName}(${paramName});`);
+      : toParamName(constructorParam.name);
+    lines.push(`export function ${shortName}(${shortParamName}: string): ${builderClassName} {`);
+    lines.push(`  return new ${builderClassName}(${shortParamName});`);
     lines.push(`}`);
   } else {
     lines.push(`export function ${shortName}(): ${builderClassName} {`);

@@ -2,7 +2,7 @@
  * Emits a fluent namespace module that maps short names to builder constructors.
  */
 
-import { toShortName, toFileName, toGrammarTypeName } from '../naming.ts';
+import { toShortName, toGrammarTypeName, toFactoryName, resolveFileNames } from '../naming.ts';
 
 export interface EmitFluentConfig {
   grammar: string;
@@ -14,22 +14,52 @@ export function emitFluent(config: EmitFluentConfig): string {
   const grammarTypeName = toGrammarTypeName(grammar);
   const grammarPrefix = grammarTypeName.slice(0, -5);
 
+  const fileNames = resolveFileNames(nodeKinds);
+
+  // Detect duplicate short names and fall back to full factory name
+  const shortNameCounts = new Map<string, number>();
+  for (const kind of nodeKinds) {
+    const short = toShortName(kind);
+    shortNameCounts.set(short, (shortNameCounts.get(short) ?? 0) + 1);
+  }
+
   const imports: string[] = [];
   const entries: string[] = [];
+  const usedPropertyKeys = new Set<string>();
 
   for (const kind of nodeKinds) {
     const shortName = toShortName(kind);
-    const fileName = toFileName(kind);
+    const fileName = fileNames.get(kind)!;
+    const factoryName = toFactoryName(kind);
 
-    imports.push(`import { ${shortName} } from './nodes/${fileName}.ts';`);
+    // When short names collide, import with rename to factory name
+    const isDuplicate = (shortNameCounts.get(shortName) ?? 0) > 1;
+    const importBinding = isDuplicate ? factoryName : shortName;
 
-    // If the short name contains a trailing underscore (reserved word escape),
-    // use the base word (without underscore) as the property key
-    const baseName = shortName.endsWith('_') ? shortName.slice(0, -1) : shortName;
-    if (baseName !== shortName) {
-      entries.push(`  ${baseName}: ${shortName},`);
+    if (importBinding !== shortName) {
+      imports.push(`import { ${shortName} as ${importBinding} } from './nodes/${fileName}.ts';`);
     } else {
-      entries.push(`  ${shortName},`);
+      imports.push(`import { ${shortName} } from './nodes/${fileName}.ts';`);
+    }
+
+    // Determine the property key for the ir namespace
+    let propertyKey: string;
+    if (isDuplicate) {
+      // Use full camelCase factory name for duplicates
+      propertyKey = factoryName;
+    } else {
+      // Use base word (strip trailing underscore for reserved words) as property key
+      propertyKey = shortName.endsWith('_') ? shortName.slice(0, -1) : shortName;
+    }
+
+    // Skip if property key already used (shouldn't happen with the above logic)
+    if (usedPropertyKeys.has(propertyKey)) continue;
+    usedPropertyKeys.add(propertyKey);
+
+    if (propertyKey !== importBinding) {
+      entries.push(`  ${propertyKey}: ${importBinding},`);
+    } else {
+      entries.push(`  ${importBinding},`);
     }
   }
 
